@@ -70,7 +70,7 @@ try:
             tooltip=['maand', 'omzet']
         )
 
-        # Voeg de target lijn toe
+        # Voeg de enkele targetlijn toe voor de totale omzet
         target_line = alt.Chart(omzet_per_maand).mark_rule(color='red', strokeDash=[4, 4]).encode(
             y=alt.datum(target),
             tooltip=alt.value(f"Target: {target}")
