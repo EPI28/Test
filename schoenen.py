@@ -71,4 +71,21 @@ try:
         )
 
         # Voeg de target lijn toe
-        target_line = alt.Chart(omzet_per_maand).mark_rule(color='red',
+        target_line = alt.Chart(omzet_per_maand).mark_rule(color='red', strokeDash=[4, 4]).encode(
+            y=alt.datum(target),
+            tooltip=alt.value(f"Target: {target}")
+        )
+
+        # Combineer de staafgrafiek met de targetlijn
+        full_chart = base + target_line
+
+        # Toon de grafiek
+        st.altair_chart(full_chart.interactive(), use_container_width=True)
+
+    else:
+        st.warning(f"De volgende kolommen ontbreken voor omzetberekening: {required_cols - set(df.columns)}")
+
+except FileNotFoundError:
+    st.error("CSV-bestand niet gevonden. Zorg dat het bestand 'exclusieve_schoenen_verkoop_met_locatie.csv' in dezelfde map staat als dit script.")
+except Exception as e:
+    st.error(f"Er is een fout opgetreden bij het laden of verwerken van het bestand: {e}")
