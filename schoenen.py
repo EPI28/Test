@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
+import altair as alt
 
 st.set_page_config(page_title="Schoenen Verkoop Analyse", layout="wide")
-st.title("👟 Exclusieve Schoenen Verkoop met Locatie en Omzetanalyse")
+st.title("👟 Exclusieve Schoenen Verkoop met Locatie, Omzetanalyse en Targets")
 
 # CSV inlezen
 try:
@@ -19,7 +20,7 @@ try:
         st.map(df[['latitude', 'longitude']])
 
     # Vereiste kolommen checken
-    required_cols = {'aankoopdatum', 'prijs', 'aantal'}
+    required_cols = {'aankoopdatum', 'prijs', 'aantal', 'land'}
     if required_cols.issubset(df.columns):
         st.subheader("📈 Omzet per maand per land")
 
@@ -48,22 +49,55 @@ try:
         if geselecteerd_merk != 'Alle merken':
             gefilterde_df = gefilterde_df[gefilterde_df['merk'] == geselecteerd_merk]
 
-        # Controleer of kolom 'land' bestaat
-        if 'land' not in gefilterde_df.columns:
-            st.warning("Kolom 'land' ontbreekt in de dataset. Kan geen lijnen per land tekenen.")
-        else:
-            # Groepeer per maand en land
-            omzet_per_maand_land = (
-                gefilterde_df
-                .groupby(['maand', 'land'])['omzet']
-                .sum()
-                .reset_index()
-                .pivot(index='maand', columns='land', values='omzet')
-                .fillna(0)
-            )
+        landen = sorted(gefilterde_df['land'].unique())
 
-            # Lijndiagram tonen
-            st.line_chart(omzet_per_maand_land)
+        st.subheader("🎯 Targets per land")
+        targets = {}
+        for land in landen:
+            targets[land] = st.number_input(f"Target omzet per maand voor {land}", min_value=0.0, value=0.0, step=100.0)
+
+        # Omzet per maand per land berekenen
+        omzet_per_maand = (
+            gefilterde_df
+            .groupby(['maand', 'land'])['omzet']
+            .sum()
+            .reset_index()
+        )
+
+        # Grafiek opbouwen met Altair
+        st.subheader("📊 Maandelijkse omzet per land met targets")
+
+        base = alt.Chart(omzet_per_maand).mark_line(point=True).encode(
+            x='maand:T',
+            y='omzet:Q',
+            color=alt.condition(
+                alt.datum.omzet > alt.datum.target,
+                alt.value('green'),
+                alt.value('red')
+            ),
+            tooltip=['maand', 'land', 'omzet', 'target', alt.condition(
+                alt.datum.omzet > alt.datum.target,
+                alt.value('Boven target'),
+                alt.value('Onder target')
+            )]
+        )
+
+        # Voeg de target lijn toe per land
+        target_lines = []
+        for land, target in targets.items():
+            if target > 0:
+                line = alt.Chart(omzet_per_maand[omzet_per_maand['land'] == land]).mark_rule(color='red', strokeDash=[4, 4]).encode(
+                    y=alt.datum(target),
+                    tooltip=alt.value(f"Target: {target}")
+                ).properties(title=f"Targetlijn voor {land}")
+                target_lines.append(line)
+
+        full_chart = base
+        for tline in target_lines:
+            full_chart += tline
+
+        st.altair_chart(full_chart.interactive(), use_container_width=True)
+
     else:
         st.warning(f"De volgende kolommen ontbreken voor omzetberekening: {required_cols - set(df.columns)}")
 
