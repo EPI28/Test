@@ -26,7 +26,7 @@ try:
 except FileNotFoundError:
     st.error("CSV-bestand niet gevonden. Zorg dat het bestand 'exclusieve_schoenen_verkoop_met_locatie.csv' in dezelfde map staat als dit script.")
 except Exception as e:
-    st.error(f"Er is een fout opgetreden bij het laden van het bestand: {e
+    st.error(f"Er is een fout opgetreden bij het laden van het bestand: {e}")
                                                                         
 # Toon de eerste rijen van de dataset
 print(df.head())
