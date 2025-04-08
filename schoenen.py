@@ -25,4 +25,38 @@ try:
 
         # Datum verwerken
         df['aankoopdatum'] = pd.to_datetime(df['aankoopdatum'], errors='coerce')
-        df = df.dropna(subset=['aankoopdatum
+        df = df.dropna(subset=['aankoopdatum'])
+
+        # Extra kolommen
+        df['jaar'] = df['aankoopdatum'].dt.year
+        df['maand'] = df['aankoopdatum'].dt.to_period('M').astype(str)
+        df['omzet'] = df['prijs'] * df['aantal']
+
+        # Filters: jaar en merk
+        jaren = sorted(df['jaar'].unique())
+        jaren_keuze = ['Alle jaren'] + list(map(str, jaren))
+        geselecteerd_jaar = st.selectbox("Filter op jaar", jaren_keuze)
+
+        merken = sorted(df['merk'].dropna().unique()) if 'merk' in df.columns else []
+        merken_keuze = ['Alle merken'] + merken
+        geselecteerd_merk = st.selectbox("Filter op merk", merken_keuze)
+
+        # Filtering toepassen
+        gefilterde_df = df.copy()
+        if geselecteerd_jaar != 'Alle jaren':
+            gefilterde_df = gefilterde_df[gefilterde_df['jaar'] == int(geselecteerd_jaar)]
+        if geselecteerd_merk != 'Alle merken':
+            gefilterde_df = gefilterde_df[gefilterde_df['merk'] == geselecteerd_merk]
+
+        # Groepeer per maand
+        omzet_per_maand = gefilterde_df.groupby('maand')['omzet'].sum().reset_index()
+
+        # Plotten
+        st.line_chart(data=omzet_per_maand, x='maand', y='omzet')
+    else:
+        st.warning(f"De volgende kolommen ontbreken voor omzetberekening: {required_cols - set(df.columns)}")
+
+except FileNotFoundError:
+    st.error("CSV-bestand niet gevonden. Zorg dat het bestand 'exclusieve_schoenen_verkoop_met_locatie.csv' in dezelfde map staat als dit script.")
+except Exception as e:
+    st.error(f"Er is een fout opgetreden bij het laden of verwerken van het bestand: {e}")
