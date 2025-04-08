@@ -83,4 +83,4 @@ try:
 except FileNotFoundError:
     st.error("CSV-bestand niet gevonden. Zorg dat het bestand 'exclusieve_schoenen_verkoop_met_locatie.csv' in dezelfde map staat als dit script.")
 except Exception as e:
-    st.error(f"Er is een fout opgetreden bij het laden of verwerken van het bestand:
+    st.error(f"Er is een fout opgetreden bij het laden of verwerken van het bestand: {e}")
