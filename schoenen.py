@@ -64,6 +64,9 @@ try:
             .reset_index()
         )
 
+        # Voeg de target kolom toe aan de dataset
+        omzet_per_maand['target'] = omzet_per_maand['land'].map(targets)
+
         # Grafiek opbouwen met Altair
         st.subheader("📊 Maandelijkse omzet per land met targets")
 
