@@ -26,12 +26,20 @@ try:
         # Zorg dat aankoopdatum als datetime wordt herkend
         df['aankoopdatum'] = pd.to_datetime(df['aankoopdatum'], errors='coerce')
 
-        # Bereken omzet
+        # Voeg extra kolommen toe
+        df['jaar'] = df['aankoopdatum'].dt.year
+        df['maand'] = df['aankoopdatum'].dt.to_period('M').astype(str)
         df['omzet'] = df['prijs'] * df['aantal']
 
-        # Groepeer per maand
-        df['maand'] = df['aankoopdatum'].dt.to_period('M').astype(str)
-        omzet_per_maand = df.groupby('maand')['omzet'].sum().reset_index()
+        # Filter op jaar
+        jaren = sorted(df['jaar'].dropna().unique())
+        geselecteerd_jaar = st.selectbox("Kies een jaar", jaren)
+
+        # Filter de data op het gekozen jaar
+        gefilterde_df = df[df['jaar'] == geselecteerd_jaar]
+
+        # Groepeer omzet per maand
+        omzet_per_maand = gefilterde_df.groupby('maand')['omzet'].sum().reset_index()
 
         # Plotten
         st.line_chart(data=omzet_per_maand, x='maand', y='omzet')
