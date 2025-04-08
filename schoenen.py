@@ -19,18 +19,18 @@ try:
         st.map(df[['latitude', 'longitude']])
     
     # Controleer of nodige kolommen bestaan
-    required_cols = {'verkoopdatum', 'prijs', 'aantal'}
+    required_cols = {'aankoopdatum', 'prijs', 'aantal'}
     if required_cols.issubset(df.columns):
         st.subheader("📈 Omzet per maand")
 
-        # Zorg dat verkoopdatum als datetime wordt herkend
-        df['verkoopdatum'] = pd.to_datetime(df['verkoopdatum'], errors='coerce')
+        # Zorg dat aankoopdatum als datetime wordt herkend
+        df['aankoopdatum'] = pd.to_datetime(df['aankoopdatum'], errors='coerce')
 
         # Bereken omzet
         df['omzet'] = df['prijs'] * df['aantal']
 
         # Groepeer per maand
-        df['maand'] = df['verkoopdatum'].dt.to_period('M').astype(str)
+        df['maand'] = df['aankoopdatum'].dt.to_period('M').astype(str)
         omzet_per_maand = df.groupby('maand')['omzet'].sum().reset_index()
 
         # Plotten
