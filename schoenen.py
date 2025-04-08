@@ -21,7 +21,7 @@ try:
     # Vereiste kolommen checken
     required_cols = {'aankoopdatum', 'prijs', 'aantal'}
     if required_cols.issubset(df.columns):
-        st.subheader("📈 Omzet per maand")
+        st.subheader("📈 Omzet per maand per land")
 
         # Datum verwerken
         df['aankoopdatum'] = pd.to_datetime(df['aankoopdatum'], errors='coerce')
@@ -48,11 +48,22 @@ try:
         if geselecteerd_merk != 'Alle merken':
             gefilterde_df = gefilterde_df[gefilterde_df['merk'] == geselecteerd_merk]
 
-        # Groepeer per maand
-        omzet_per_maand = gefilterde_df.groupby('maand')['omzet'].sum().reset_index()
+        # Controleer of kolom 'land' bestaat
+        if 'land' not in gefilterde_df.columns:
+            st.warning("Kolom 'land' ontbreekt in de dataset. Kan geen lijnen per land tekenen.")
+        else:
+            # Groepeer per maand en land
+            omzet_per_maand_land = (
+                gefilterde_df
+                .groupby(['maand', 'land'])['omzet']
+                .sum()
+                .reset_index()
+                .pivot(index='maand', columns='land', values='omzet')
+                .fillna(0)
+            )
 
-        # Plotten
-        st.line_chart(data=omzet_per_maand, x='maand', y='omzet')
+            # Lijndiagram tonen
+            st.line_chart(omzet_per_maand_land)
     else:
         st.warning(f"De volgende kolommen ontbreken voor omzetberekening: {required_cols - set(df.columns)}")
 
