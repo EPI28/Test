@@ -39,4 +39,64 @@ try:
         geselecteerd_jaar = st.selectbox("Filter op jaar", jaren_keuze)
 
         merken = sorted(df['merk'].dropna().unique()) if 'merk' in df.columns else []
-        merken_keuze_
+        merken_keuze = ['Alle merken'] + merken
+        geselecteerd_merk = st.selectbox("Filter op merk", merken_keuze)
+
+        # Filtering toepassen
+        gefilterde_df = df.copy()
+        if geselecteerd_jaar != 'Alle jaren':
+            gefilterde_df = gefilterde_df[gefilterde_df['jaar'] == int(geselecteerd_jaar)]
+        if geselecteerd_merk != 'Alle merken':
+            gefilterde_df = gefilterde_df[gefilterde_df['merk'] == geselecteerd_merk]
+
+        landen = sorted(gefilterde_df['land'].unique())
+
+        st.subheader("🎯 Targets per land")
+        targets = {}
+        for land in landen:
+            targets[land] = st.number_input(f"Target omzet per maand voor {land}", min_value=0.0, value=0.0, step=100.0)
+
+        # Omzet per maand per land berekenen
+        omzet_per_maand = (
+            gefilterde_df
+            .groupby(['maand', 'land'])['omzet']
+            .sum()
+            .reset_index()
+        )
+
+        # Voeg de target kolom toe aan de dataset
+        omzet_per_maand['target'] = omzet_per_maand['land'].map(targets)
+
+        # Grafiek opbouwen met Altair (staafdiagram)
+        st.subheader("📊 Maandelijkse omzet per land met targets (Staafdiagram)")
+
+        base = alt.Chart(omzet_per_maand).mark_bar().encode(
+            x='maand:T',
+            y='omzet:Q',
+            color='land:N',
+            tooltip=['maand', 'land', 'omzet', 'target']
+        )
+
+        # Voeg de target lijn toe per land
+        target_lines = []
+        for land, target in targets.items():
+            if target > 0:
+                line = alt.Chart(omzet_per_maand[omzet_per_maand['land'] == land]).mark_rule(color='red', strokeDash=[4, 4]).encode(
+                    y=alt.datum(target),
+                    tooltip=alt.value(f"Target: {target}")
+                ).properties(title=f"Targetlijn voor {land}")
+                target_lines.append(line)
+
+        full_chart = base
+        for tline in target_lines:
+            full_chart += tline
+
+        st.altair_chart(full_chart.interactive(), use_container_width=True)
+
+    else:
+        st.warning(f"De volgende kolommen ontbreken voor omzetberekening: {required_cols - set(df.columns)}")
+
+except FileNotFoundError:
+    st.error("CSV-bestand niet gevonden. Zorg dat het bestand 'exclusieve_schoenen_verkoop_met_locatie.csv' in dezelfde map staat als dit script.")
+except Exception as e:
+    st.error(f"Er is een fout opgetreden bij het laden of verwerken van het bestand: {e}")
