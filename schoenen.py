@@ -14,11 +14,6 @@ try:
     st.subheader("🔍 Dataset")
     st.dataframe(df, use_container_width=True)
 
-    # Kaartweergave als latitude/longitude aanwezig zijn
-    if {'latitude', 'longitude'}.issubset(df.columns):
-        st.subheader("🗺️ Verkooplocaties")
-        st.map(df[['latitude', 'longitude']])
-
     # Vereiste kolommen checken
     required_cols = {'aankoopdatum', 'prijs', 'aantal'}
     if required_cols.issubset(df.columns):
@@ -70,7 +65,7 @@ try:
             tooltip=['maand', 'omzet']
         )
 
-        # Voeg de enkele targetlijn toe voor de totale omzet
+        # Voeg de target lijn toe
         target_line = alt.Chart(omzet_per_maand).mark_rule(color='red', strokeDash=[4, 4]).encode(
             y=alt.datum(target),
             tooltip=alt.value(f"Target: {target}")
@@ -88,4 +83,4 @@ try:
 except FileNotFoundError:
     st.error("CSV-bestand niet gevonden. Zorg dat het bestand 'exclusieve_schoenen_verkoop_met_locatie.csv' in dezelfde map staat als dit script.")
 except Exception as e:
-    st.error(f"Er is een fout opgetreden bij het laden of verwerken van het bestand: {e}")
+    st.error(f"Er is een fout opgetreden bij het laden of verwerken van het bestand:
